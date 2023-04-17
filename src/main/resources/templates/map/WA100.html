@@ -1,0 +1,1537 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+
+<th:block layout:fragment="css">
+</th:block>
+
+<th:block layout:fragment="script">
+    <script th:src="@{/js/jquery.twbsPagination.js}"></script>
+    <script th:src="@{/js/ajax.js}"></script>
+    <script th:src="@{/js/canvas-all.js}"></script>
+    <script>
+    	// load to Salesforce Canvas info 
+    	const clientInfo = {};
+    	
+		window.onload = function() {
+			if(window.name === ''){
+	            console.log("It didn't run within Salesforce.")
+				$("#message").text("Invalid Access Page.")
+	        }
+	    }
+		
+		Sfdc.canvas(() => {
+			Sfdc.canvas.client.refreshSignedRequest((data) => {
+				console.log("execute canvas sdk")
+				const request = JSON.parse(Sfdc.canvas.decode(data.payload.response.split('.')[1]))
+	            
+	            Sfdc.canvas.client.autogrow(request.client); //auto sizing
+	            
+	            clientInfo.creator = request.context.user.userName;
+	            clientInfo.client = request.client.instanceUrl;
+	            clientInfo.session = '';
+	            
+	            localStorage.setItem("creator", clientInfo.creator);
+	            getClient(clientInfo);
+	        })
+	    })
+	    
+	    const getClient = (clientInfo) => {
+	    	ajax("/map/wa000/svc000", JSON.stringify(clientInfo), res => {
+		    	if (res.result == "200") {
+	            	console.log(res.return_msg);
+	            } else {
+	            	console.log(res.return_msg);
+				}
+			}, "POST");
+	    }
+    </script>
+    
+    <script>
+        let starDate;
+        let endDate;
+
+        document.addEventListener("DOMContentLoaded", () => {
+
+            map_list(); //메인페이지 맵핑 리스트
+            sys_item(); //카테고리, 시스템 리스트
+
+            dId("startDate").value = new Date().toISOString().split('T')[0];
+            dId("endDate").value = new Date().toISOString().split('T')[0];
+
+            // 조회 시작 날짜 선택
+            dId("startDate").addEventListener("change", () => {
+                starDate = dId("startDate").value;
+            });
+
+            // 조회 종료 날짜 선택
+            dId("endDate").addEventListener("change", () => {
+                endDate = dId("endDate").value;
+                if (starDate != null) {
+                    if (endDate >= starDate) {
+                        starDate = dId("startDate").value;
+                        endDate = dId("endDate").value;
+
+                    } else {
+                        alert("종료일은 시작일 다음날부터 선택해주세요.");
+                        dId("endDate").value = "";
+                    }
+                }
+            });
+
+            //카테고리, 시스템 리스트
+            function sys_item() {
+                $.ajax({
+                    url: "/map/wa000/svc001",
+                    type: "GET",
+                    success: function (data) {
+                        data.result.category.forEach(function (value, index) {
+                            let list_option = $('<option value="'+ value.code +'">'+ value.name +'</option>');
+                            $("#search_category_name_code").append(list_option);
+
+                            let add_option = $('<option value="'+ value.code +'">'+ value.name +'</option>');
+                            $("#add_category_name_code_m").append(add_option);
+
+                            let modify_option = $('<option value="'+ value.code +'">'+ value.name +'</option>');
+                            $("#modify_category_name_code_m").append(modify_option);
+                        });
+                        data.result.system.forEach(function (value, index) {
+                            // 메인 검색 소스 시스템
+                            let sys_list_option = $('<option value="'+ value.code +'">'+ value.name +'</option>');
+                            $("#search_system_name_code").append(sys_list_option);
+                            // 메인 검색 타겟 시스템
+                            let tgt_list_option = $('<option value="'+ value.code +'">'+ value.name +'</option>');
+                            $("#search_target_system_name_code").append(tgt_list_option);
+
+                            //등록 소스 시스템
+                            let add_source_option = $('<option value="'+ value.code +'" name="'+ value.id+'">'+ value.name +'</option>');
+                            $("#add_system_name_code_m").append(add_source_option);
+                            //등록 타겟 시스템
+                            let add_target_option = $('<option value="'+ value.code +'">'+ value.name +'</option>');
+                            $("#add_target_system_name_m").append(add_target_option);
+
+                            //수정 소스 시스템
+                            let modify_source_option = $('<option value="'+ value.code +'" name="'+ value.id +'">'+ value.name +'</option>');
+                            $("#modify_system_name_code_m").append(modify_source_option);
+                            //수정 타겟 시스템
+                            let modify_target_option = $('<option value="'+ value.code +'">'+ value.name +'</option>');
+                            $("#modify_target_system_name").append(modify_target_option);
+                        });
+                    }
+                })
+            }
+
+            //메인페이지 맵핑 리스트
+            function map_list() {
+                $.ajax({
+                    url: "/map/wa100/svc101",
+                    async: false,
+                    type: "GET",
+                    success: function (data) {
+                        let html = '';
+
+                        if (data.result.length != 0) {
+                            data.result.forEach(function (value, index) {
+
+                                let create_datetime = value.created_datetime.replace('T', ' ').substring(0, 19)
+                                let modify_datetime = value.last_modified_datetime.replace('T', ' ').substring(0, 19)
+
+                                html += '<tr class="text-center" onclick="clickEvent2()" id="mapping_id" data-bs-toggle="modal" data-bs-target="#addMapping">'
+                                html += '   <td>'+(index+1)+'</td>'
+                                html += '   <td>'+ value.id +'</td>'
+                                html += '   <td style="display: none">'+ value.cat_code +'</td>'
+                                html += '   <td>'+ value.cat_name +'</td>'
+                                html += '   <td style="text-align: left">'+ value.name +'</td>'
+                                html += '   <td style="text-align: left">'+ value.description +'</td>'
+                                html += '   <td style="display: none" id="src_id">'+ value.src_id +'</td>'
+                                html += '   <td style="display: none">'+ value.src_sys_code +'</td>'
+                                html += '   <td>'+ value.src_sys_name +'</td>'
+                                html += '   <td>'+ value.src_obj_name +'</td>'
+                                html += '   <td style="display: none" id="tgt_id">'+ value.tgt_id +'</td>'
+                                html += '   <td style="display: none">'+ value.tgt_sys_code +'</td>'
+                                html += '   <td>'+ value.tgt_sys_name +'</td>'
+                                html += '   <td>'+ value.tgt_obj_name +'</td>'
+                                html += '   <td>'+ value.map_creator +'</td>'
+                                html += '   <td>'+ create_datetime +'</td>'
+                                html += '   <td>'+ modify_datetime +'</td>'
+                                html += '</tr>'
+                            })
+                        } else {
+                            html += '<tr class="text-center">'
+                            html += '<td colspan="13">맵핑 리스트가 없습니다.</td>'
+                            html += '</tr>'
+                        }
+                        dCN("mapping-list")[0].querySelector("tbody").innerHTML = html;
+                        trClick();
+                    },
+                })
+            }
+
+        });
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+
+            dId("to_search_btn").addEventListener("click", function () {
+                if (dId("add_system_name_code_m").value == "all") {
+                    alert("Source System Name을 선택해주세요.");
+                    return false;
+                } else if (!dId("toName").value) {
+                    alert("Target Object Name을 입력해주세요.");
+                    return false;
+                } else {
+                    metaData();
+                }
+            })
+
+            let SalesfoectType = ["ADDRESS", "ANYTYPE", "CALCULATED", "COMBOBOX", "CURRENCY", "DATACATEGORYGROUPREFERENCE", "EMAIL", "ENCRYPTEDSTRING", "ID",
+                "JUNCTIONIDLIST", "LOCATION", "MASTERRECORD", "MULTIPICKLIST", "PERCENT", "PHONE", "PICKLIST", "REFERENCE", "TEXTAREA", "URL",
+                "BASE64", "BOOLEAN", "BYTE", "DATE", "DATETIME", "DOUBLE", "INT", "STRING", "TIME"];
+
+            let OracleType = ["CHAR", "VARCHAR", "VARCHAR2", "NCHAR", "NVARCHAR", "LONG", "CLOB", "NCLOB", "NUMBER", "FLOAT", "BINARY_FLOAT", "BINARY_DOUBLE", "DATE", "TIMESTAMP",
+                "BLOB", "BFILE", "LONG_RAW"];
+
+
+
+            // 타겟 오브젝트 정보
+            // 2023.01.11 메타 로드시 소스 필드 정보 초기값으로 타겟 필드 정보를 입력 / field type 제외(service 추가 필요)
+            function metaData() {
+
+                let name = dId("toName").value
+                let srcSysCode = dId("add_system_name_code_m").value;
+                let tgtSysCode = dId("add_target_system_name_m").value;
+                let tgtSysId = dSel("#add_system_name_code_m > option:checked").attributes[1].value;
+                let tgtObjName = dId("toName").value;
+                let srcSysName = dSel("#add_system_name_code_m > option:checked").textContent;
+
+                let url = "/map/wa110/svc601";
+                let params = {srcSysCode : srcSysCode, tgtSysCode : tgtSysCode, tgtSysId : tgtSysId, tgtObjName : tgtObjName};
+
+                ajax(url, params, res => {
+
+                    let html = '';
+                    let title = '';
+                    let add_mapping_tr_list = '';
+
+                    title += '<h5 class="modal-title" style="margin-bottom: 9px;">'+ name +'</h5>';
+                    if (res.result.length != 0) {
+                        res.result.forEach(function (value, index) {
+                            html += '   <tr class="text-start" id="'+ (index) +'" name="'+ (index) +'">'
+                            html += '       <td>'+ (index+1) + '</td>'
+                            html += '       <td style="display: none"><input type="hidden" value="'+ (index+1) + '"></td>'
+                            html += '       <td>'+ value.name +'<input type="hidden" value="'+ value.name +'"></td>'
+                            html += '       <td style="width: 20%">' +
+                                '               <select class="form-select" id="object-type-select" disabled>' +
+                                '                    <option value="'+ value.type +'" selected>'+ value.type +'</option>' +	
+                                // '                 <option value="2">category1</option>' +
+                                '                </select>' +
+                                '           </td>'
+                            html += '       <td style="width: 15%;"><input type="text" value="'+ value.length +'" style="width: 50%;" disabled></td>'
+                            html += '       <td style="width: 15%">' +
+                                '               <select class="form-select" id="object-type-select" disabled>' +
+                                '                   <option value="'+ value.nillable +'" selected>'+ value.nillable +'</option>' +
+                                '               </select>' +
+                                '           </td>'
+                            html += '       <td style="width: 15%;"><input type="text" value="'+ value.precision +'" style="width: 50%;" disabled></td>'
+                            html += '       <td style="width: 15%;"><input type="text" value="'+ value.digits +'" style="width: 50%;" disabled></td>'
+                            // html += '       <td><button class="btn-close" type="button" id="del_column" onclick="remove_tr(this)"></button></td>'
+                            // html += '       <td style="width: 15%;"><input type="button" class="btn btn-warning" onclick="add_tr(this)" value="추가"></td>'
+                            html += '   </tr>'
+
+                            add_mapping_tr_list += '<tr class="text-start" id="'+ (index) +'" name="'+ (index) +'">';
+                            add_mapping_tr_list += '<td>';
+                            // add_mapping_tr_list += '    <input type="text" id="add_meta_name" name="add_meta_name" required>';
+                            add_mapping_tr_list += '<input type="text" id="add_meta_name" name="add_meta_name" value="'+ value.name.replace('__c', '') + '" required>';
+                            add_mapping_tr_list += '</td>';
+                            add_mapping_tr_list += '<td style="width: 20%">';
+                            add_mapping_tr_list += '    <select class="form-select" id="add_meta_type" name="add_meta_type" required>';
+                            add_mapping_tr_list += '        <option value="all" selected>type</option>';
+                            if (srcSysName == "Salesforce Dev") { //Source System Name -> Salesforce Dev
+                                for (let i = 0; i < SalesfoectType.length; i++) {
+                                    add_mapping_tr_list += '<option value="'+SalesfoectType[i]+'">'+SalesfoectType[i]+'</option>';
+                                }
+                            }  else {
+                                for (let i = 0; i < OracleType.length; i++) {
+                                    add_mapping_tr_list += '<option value="'+OracleType[i]+'">'+OracleType[i]+'</option>';
+                                }
+                            }
+                            add_mapping_tr_list += '    </select>';
+                            add_mapping_tr_list += '</td>';
+                            add_mapping_tr_list += '<td style="width: 15%">';
+                            // add_mapping_tr_list += '    <input type="text" style="width: 50%" id="add_meta_length" name="add_meta_length" value="0" required>';
+                            add_mapping_tr_list += '    <input type="text" style="width: 50%" id="add_meta_length" name="add_meta_length" value="'+ value.length +'" required>';
+                            add_mapping_tr_list += '</td>';
+                            add_mapping_tr_list += '<td style="width: 15%">';
+                            add_mapping_tr_list += '    <select class="form-select" id="add_meta_nullable" name="add_meta_nullable" required>';
+                            add_mapping_tr_list += '        <option value="true" selected>true</option>';
+                            add_mapping_tr_list += '        <option value="false">false</option>';
+                            add_mapping_tr_list += '    </select>';
+                            add_mapping_tr_list += '</td>';
+                            add_mapping_tr_list += '<td style="width: 15%">';
+                            add_mapping_tr_list += '    <input type="text" style="width: 50%" id="add_meta_precision" name="add_meta_precision" value="'+ value.precision +'" required>';
+                            add_mapping_tr_list += '</td>';
+                            add_mapping_tr_list += '<td style="width: 15%">';
+                            add_mapping_tr_list += '    <input type="text" style="width: 50%" id="add_meta_digits" name="add_meta_digits" value="'+ value.digits +'" required>';
+                            add_mapping_tr_list += '</td>';
+                            add_mapping_tr_list += '<td>';
+                            add_mapping_tr_list += '    <button class="btn-close" type="button" id="del_column" onclick="remove_add_tr(this)"></button>';
+                            add_mapping_tr_list += '</td>';
+                            add_mapping_tr_list += '</tr>';
+
+
+                        })
+                        dCN("add_meta")[0].querySelector("tbody").innerHTML = add_mapping_tr_list
+                        dCN("meta_list")[0].querySelector("tbody").innerHTML = html;
+                        dCN("meta_title")[0].innerHTML = title;
+                    }
+                    let meta_list = dSel('.meta-column-list').children;
+                    for(let i=0;  i<meta_list.length; i++ ){
+                        let meta_list_index = meta_list[i].rowIndex;
+                    }
+                    dCN("meta_list")[0].style.display = "block";
+                })
+            }
+
+            //맵핑추가 validation check
+            function addValCheck() {
+                if (dId("add_category_name_code_m").value == "all") {
+                    alert("Category Name을 선택해주세요.");
+                    return false;
+                }
+                if (!dId("mapName").value) {
+                    alert("Mapping Name을 입력해주세요.");
+                    dId("mapName").focus();
+                    return false;
+                }
+                if (dId("add_system_name_code_m").value == "all") {
+                    alert("System Name을 선택해주세요.");
+                    return false;
+                }
+                if (!dId("soName").value) {
+                    alert("Source Object Name을 입력해주세요.");
+                    dId("soName").focus()
+                    return false;
+                }
+                if (dId("add_target_system_name_m").value  == "all") {
+                    alert("Target System을 선택해주세요.");
+                    return false;
+                }
+                if (!dId("toName").value) {
+                    alert("Target Object Name을 입력해주세요.");
+                    dId("toName").focus()
+                    return false;
+                }
+                if (!dId("mapCreator").value) {
+                    alert("맵핑 생성자를 입력해주세요.");
+                    dId("mapCreator").focus()
+                    return false;
+                }
+
+                let inputLength = document.getElementsByName("add_meta_name").length
+
+                for (i = 0; i < inputLength; i++) {
+                    if (!document.getElementsByName("add_meta_name")[i].value) {
+                        alert("name을 입력해주세요.");
+                        return false;
+                    }
+                    if (document.getElementsByName("add_meta_type")[i].value == "all") {
+                        alert("type을 선택해주세요.");
+                        return false;
+                    }
+                    if (!document.getElementsByName("add_meta_length")[i].value) {
+                        alert("length을 입력해주세요.");
+                        return false;
+                    }
+                    if (!document.getElementsByName("add_meta_precision")[i].value) {
+                        alert("precision을 입력해주세요.");
+                        return false;
+                    }
+                    if (!document.getElementsByName("add_meta_digits")[i].value) {
+                        alert("digits을 입력해주세요.");
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            dId("saveBtn").addEventListener("click", function () {
+                if (addValCheck()) {
+                    
+                	// if (MsgBox.Confirm("저장하시겠습니까?")){
+                	if (confirm("저장하시겠습니까?")) {
+
+                        let url = "/map/wa110/svc201";
+                        let cat_code = dId("add_category_name_code_m").value;
+                        let cat_name = dSel("#add_category_name_code_m > option:checked").textContent;
+                        let map_name = dId("mapName").value;
+                        let map_desc = dId("mapDesc").value;
+                        let sys_code = dId("add_system_name_code_m").value;
+                        let sys_name = dSel("#add_system_name_code_m > option:checked").textContent;
+                        let source_obj_name = dId("soName").value;
+                        let tgt_sys_code = dId("add_target_system_name_m").value;
+                        let tgt_sys_name = dSel("#add_target_system_name_m > option:checked").textContent;
+                        let tgt_obj_name = dId("toName").value;
+                        let map_creator = dId("mapCreator").value
+
+                        let basicInfo = {"cat_code": cat_code,
+                            "cat_name": cat_name,
+                            "name": map_name,
+                            "description": map_desc,
+                            "src_sys_code": sys_code,
+                            "src_sys_name": sys_name,
+                            "src_obj_name": source_obj_name,
+                            "tgt_sys_code": tgt_sys_code,
+                            "tgt_sys_name": tgt_sys_name,
+                            "tgt_obj_name": tgt_obj_name,
+                            "creator" : map_creator};
+
+                        let tgtTrGroup = Array.from(dId("tgt_object").querySelector("tbody").rows);
+                        const tgt_Obj_list = tgtTrGroup.map(tr => {
+                            return Array.from(tr.querySelectorAll("input,select")).map(input => input.value, select => select.value);
+                        });
+
+                        let sysTrGroup = Array.from(dId("add_meta_table").querySelector("tbody").rows);
+                        const src_Obj_list = sysTrGroup.map(tr => {
+                            return Array.from(tr.querySelectorAll("input,select")).map(input => input.value, select => select.value);
+                        });
+
+                        const fieldMappingList = [];
+                        for(var i=0; i<src_Obj_list.length; i++) {
+                            fieldMappingList.push({order:tgt_Obj_list[i][0], tgt_fld_name:tgt_Obj_list[i][1], tgt_fld_type:tgt_Obj_list[i][2], tgt_fld_max_length:tgt_Obj_list[i][3], tgt_fld_nullable:tgt_Obj_list[i][4], tgt_fld_precision:tgt_Obj_list[i][5], tgt_fld_digits:tgt_Obj_list[i][6],
+                                src_fld_name:src_Obj_list[i][0], src_fld_type:src_Obj_list[i][1], src_fld_max_length:src_Obj_list[i][2], src_fld_nullable:src_Obj_list[i][3], src_fld_precision:src_Obj_list[i][4], src_fld_digits:src_Obj_list[i][5]});
+                        }
+                        let addMappingData = {"basicInfo": basicInfo, "fieldMappingList": fieldMappingList};
+
+                        console.log(addMappingData)
+
+                        ajax(url, JSON.stringify(addMappingData), res => {
+                                if (res.result == "200") {
+                                    alert(res.return_msg);
+                                    reload();
+                                } else {
+                                    alert(res.return_msg);
+                                }
+                        }
+                        , "POST")
+
+                    }
+                }
+            })
+
+        });
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            //맵핑수정 validation check
+            function modifyValCheck() {
+                if (dId("modify_category_name_code_m").value == "all") {
+                    alert("Category Name을 선택해주세요.");
+                    return false;
+                }
+                if (!dId("mapNameM").value) {
+                    alert("Mapping Name을 입력해주세요.");
+                    dId("mapNameM").focus();
+                    return false;
+                }
+                if (dId("modify_system_name_code_m").value == "all") {
+                    alert("System Name을 선택해주세요.");
+                    return false;
+                }
+                if (!dId("soNameM").value) {
+                    alert("Source Object Name을 입력해주세요.");
+                    dId("soNameM").focus()
+                    return false;
+                }
+                if (!dId("toNameM").value) {
+                    alert("Target Object Name을 입력해주세요.");
+                    dId("toNameM").focus()
+                    return false;
+                }
+                return true;
+            }
+
+            dId("modifyBtn").addEventListener("click", function () {
+                if (modifyValCheck()) {
+                    if (valCheck_m()) {
+                        if (confirm("수정하시겠습니까?")) {
+
+                            let url = "/map/wa110/svc201";
+                            let cat_code = dId("modify_category_name_code_m").value;
+                            let cat_name = dSel("#modify_category_name_code_m > option:checked").textContent;
+                            let map_name = dId("mapNameM").value;
+                            let map_desc = dId("mapDescM").value;
+                            let sys_code = dId("modify_system_name_code_m").value;
+                            let sys_name = dSel("#modify_system_name_code_m > option:checked").textContent;
+                            let source_obj_name = dId("soNameM").value;
+                            let tgt_sys_code = dId("modify_target_system_name").value;
+                            let tgt_sys_name = dSel("#modify_target_system_name > option:checked").textContent;
+                            let tgt_obj_name = dId("toNameM").value;
+                            let map_creator = dId("mapCreatorM").textContent
+                            let created_datetime = dId("created_dateM").value
+
+                            let mapId = dCN("mapping_id_m")[0].textContent;
+
+                            let basicInfo = {"cat_code": cat_code,
+                                "cat_name": cat_name,
+                                "map_id": mapId,
+                                "name": map_name,
+                                "description": map_desc,
+                                "src_sys_code": sys_code,
+                                "src_sys_name": sys_name,
+                                "src_obj_name": source_obj_name,
+                                "tgt_sys_code": tgt_sys_code,
+                                "tgt_sys_name": tgt_sys_name,
+                                "tgt_obj_name": tgt_obj_name,
+                                "created_datetime": created_datetime,
+                                "creator" : map_creator};
+
+                            let tgtTrGroup = Array.from(dId("tgt_object_m").querySelector("tbody").rows);
+                            const tgt_Obj_list = tgtTrGroup.map(tr => {
+                                return Array.from(tr.querySelectorAll("input,select")).map(input => input.value, select => select.value);
+                            });
+
+                            let sysTrGroup = Array.from(dId("add_meta_table_m").querySelector("tbody").rows);
+                            const src_Obj_list = sysTrGroup.map(tr => {
+                                return Array.from(tr.querySelectorAll("input,select")).map(input => input.value, select => select.value);
+                            });
+
+                            const fieldMappingList = [];
+                            for(var i=0; i<src_Obj_list.length; i++) {
+                                fieldMappingList.push({order:tgt_Obj_list[i][0], id:tgt_Obj_list[i][1], tgt_fld_name:tgt_Obj_list[i][2], tgt_fld_type:tgt_Obj_list[i][3], tgt_fld_max_length:tgt_Obj_list[i][4], tgt_fld_nullable:tgt_Obj_list[i][5], tgt_fld_precision:tgt_Obj_list[i][6], tgt_fld_digits:tgt_Obj_list[i][7], tgt_fld_id:tgt_Obj_list[i][8], created_datetime:created_datetime,
+                                    src_fld_name:src_Obj_list[i][0], src_fld_type:src_Obj_list[i][1], src_fld_max_length:src_Obj_list[i][2], src_fld_nullable:src_Obj_list[i][3], src_fld_precision:src_Obj_list[i][4], src_fld_digits:src_Obj_list[i][5], src_fld_id:src_Obj_list[i][6]});
+                            }
+
+                            let addMappingData = {"mapId":mapId, "basicInfo": basicInfo, "fieldMappingList": fieldMappingList};
+
+                            ajax(url, JSON.stringify(addMappingData), res => {
+                                    if (res.result == "200") {
+                                        alert(res.return_msg);
+                                        reload();
+                                    } else {
+                                        alert(res.return_msg);
+                                    }
+                            }
+                            , "POST")
+
+                        }
+                    }
+                }
+            });
+
+            function valCheck_m() {
+
+                let inputLength = document.getElementsByName("add_meta_name_m").length
+
+                for (i = 0; i < inputLength; i++) {
+                    if (!document.getElementsByName("add_meta_name_m")[i].value) {
+                        alert("name을 입력해주세요.");
+                        return false;
+                    }
+                    if (document.getElementsByName("add_meta_type_m")[i].value == "all") {
+                        alert("type을 선택해주세요.");
+                        return false;
+                    }
+                    if (!document.getElementsByName("add_meta_length_m")[i].value) {
+                        alert("length을 입력해주세요.");
+                        return false;
+                    }
+                    if (!document.getElementsByName("add_meta_precision_m")[i].value) {
+                        alert("precision을 입력해주세요.");
+                        return false;
+                    }
+                    if (!document.getElementsByName("add_meta_digits_m")[i].value) {
+                        alert("digits을 입력해주세요.");
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            dId("deleteBtn").addEventListener("click", function () {
+                if(confirm("삭제하시겠습니까?")) {
+                    let mapping_id = dCN("mapping_id_m")[0].textContent;
+                    let url = "/map/wa100/svc401?id=" + mapping_id;
+
+                    ajax(url, null, res => {
+                        console.log(res)
+                            if (res.result == "200") {
+                                alert(res.return_msg);
+                                reload();
+                            } else if (res.error_code == "500") {
+                                alert(res.error_msg);
+                            }
+                    }
+                    , "DELETE")
+
+                }
+            })
+
+            //업로드 버튼 클릭
+            dId("uploadBtn").addEventListener("click", function () {
+                dId("file_upload").click();
+
+                const fileInput = document.getElementById("file_upload");
+
+                fileInput.onchange = () => {
+
+                    let mapping_id = dCN("mapping_id_m")[0].textContent;
+                    const form = document.getElementById("fileUpload");
+                    var formData = new FormData(form);
+
+                    formData.append('file',fileInput.files[0])
+                    formData.append('id',mapping_id)
+
+                    let url = "/map/wa100/svc601";
+
+                    ajax2(url, formData, res => {
+                        if (res.result == "200") {
+                            alert(res.return_msg);
+                            reload();
+                        } else if (res.error_code == "500") {
+                            alert(res.error_msg);
+                        }
+                    }, "PATCH")
+
+                };
+            })
+
+            dId("downloadBtn").addEventListener("click", function () {
+                let mapping_id = dCN("mapping_id_m")[0].textContent;
+                if (confirm("다운로드 받으시겠습니까?")) {
+                    location.href = "wa100/svc501?id=" + mapping_id;
+                }
+            })
+
+
+            $('#pagination-demo').twbsPagination({
+                totalPages: 35,
+                visiblePages: 4,
+                prev: "‹", // Previous Button Label
+                next: "›", // Next Button Label
+                first: '«', // First Button Label
+                last: '»', // Last Button Label
+                onPageClick: function (event, page) {
+                    $('#page-content').text('Page ' + page);
+                }
+            });
+
+
+        });
+        
+    </script>
+</th:block>
+
+<th:block layout:fragment="content">
+    <title>WA100</title>
+    <div class="container my-2">
+        <div class="search-mapping">
+            <form id="sys_search_form">
+            	<h2 class="border-bottom py-2">맵핑 목록</h2>
+                <div class="row my-2">
+                    <div class="col-6">
+                        <div class="input-group" style="width: 2000px;">
+                        	<!-- 2023.01.9 검색조건 항목들 format 변경 -->
+                            <table>
+                            	 <colgroup>
+						            <col width=10%>
+						            <col width=20%>
+						            <col width=3%>
+						            <col width=10%>
+						            <col width=20%>
+						            <col width=37%>
+						        </colgroup>
+                                <tr>
+                                    <th scope="row">업무 분류</th>
+                                    <td>
+                                        <!-- 인터페이스 업무 분류(코드도 포함) 선택 combobox -->
+                                        <select class="form-select" id="search_category_name_code" onchange="searchChageSelect()" style="margin: 5px;">
+                                            <option value="all" selected>전체</option>
+                                        </select>
+                                    </td>
+                                    <td></td>
+                                    <th scope="row">생성 일자</th>
+                                    <td style="display: inline-flex; float: Left" >
+                                        <!-- 생성일 조회 시작일 입력 -->
+                                        <!-- <div class="mr-2" style="align-self: center; padding: 10px;">시작일</div> -->
+                                        <div class="input-group" style="align-items: center;">
+                                            <input type="date" id="startDate">
+                                        </div>
+                                        <div class="mr-2" style="align-self: center; padding: 10px;">~</div>	
+                                        <!-- 생성일 조회 종료일 입력 -->
+                                        <!-- <div class="mr-2" style="align-self: center; padding: 10px;">종료일</div> -->
+                                        <div class="input-group" style="align-items: center;">
+                                            <input type="date" id="endDate">
+                                        </div>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">소스 시스템</th>
+									<td>
+                                        <!-- 소스 오브젝트 시스템 선택(코드도 포함) combobox -->
+                                        <select class="form-select" id="search_system_name_code" onchange="searchChageSelect()" style="margin: 5px;">
+                                            <option value="all" selected>전체</option>
+                                        </select>
+                                    </td>
+                                    <td></td>
+                                    <th scope="row">타겟 시스템</th>
+                                    <td>
+                                        <!-- 타겟 오브젝트 시스템 선택(코드도 포함) combobox -->
+                                        <select class="form-select" id="search_target_system_name_code" onchange="searchChageSelect()">
+                                            <option value="all" selected>전체</option>
+                                        </select>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">검색어</th>
+                                    <td>
+                                        <!-- 검색어 조건(맵핑명,오브젝트명) 선택 combobox -->
+                                        <select class="form-select" id="search_category" style="margin: 5px;">
+                                            <option value="name" selected>맵핑명</option>
+                                            <option value="src_obj_name">소스오브젝트</option>
+                                            <option value="tgt_obj_name">타겟오브젝트</option>
+                                        </select>
+                                    </td>
+                                    <td></td>
+                                   
+                                    <td colspan="2">
+                                        <div class="input-group">
+                                            <!-- 검색어 입력 -->
+                                            <input type="text" id="search_mapping_object" maxlength="255" class="form-control">
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group-append" style="margin: 5px;">
+                                            <button class="btn btn-outline-secondary" type="button" id="btn_search" style="width: 30%;" onclick="search()">검색</button>
+                                            <input class="btn btn-outline-secondary" type="text" id="btn_search_all" value="전체조회" style="width: 30%;" onclick="reload()" />
+                                            <!-- Button trigger modal -->
+                        					<button type="button" class="btn btn-primary" id="addMappingBtn" onclick="clickEvent()" style="width: 30%;" data-bs-toggle="modal" data-bs-target="#addMapping">등록</button>		
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div style="border-top:1.5px #b7b7b7 solid; padding: 15px;margin-top: 20px;"></div>
+        
+        <div class="mapping-list">
+            <table class="table table-striped mappingList" id="mappingList">
+                <thead class="table-mine">
+                <tr class="text-center">
+                    <th>no</th>
+                    <th>맵핑ID</th>
+                    <th style="display: none">업무 분류코드</th>
+                    <th>업무 분류</th>
+                    <th>맵핑명</th>
+                    <th>맵핑 설명</th>
+                    <th style="display: none">소스 오브젝트ID</th>
+                    <th style="display: none">소스 시스템코드</th>
+                    <th>소스 시스템</th>
+                    <th>소스 오브젝트</th>
+                    <th style="display: none">타겟 오브젝트ID</th>
+                    <th style="display: none">타겟 시스템코드</th>
+                    <th>타겟 시스템</th>
+                    <th>타겟 오브젝트</th>
+                    <th>생성자</th>
+                    <th>생성일자</th>
+                    <th>최종수정날짜</th>
+                </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 페이징 속성 정의 -->
+		<!-- <ul id="pagination-demo" class="pagination-m"></ul> -->
+
+    </div>
+	
+    <!-- Add Mapping Modal -->
+    <div class="modal fade" id="addMapping" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="addMappingLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"></h5>
+                    <button type="button" class="btn-close close_modal" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="wa110Popup">
+                        <th:block layout:replace="map/WA110 :: popup1"></th:block>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <input class="btn btn-primary close_modal" type="button" style="float:right;" id="close_modal" onclick="reload()" data-bs-dismiss="modal" value="목록">
+                </div>
+            </div>
+        </div>
+    </div>
+		
+    <script>
+	
+        dSelA(".close_modal")[0].addEventListener("click", function () {
+            dCN("meta_list")[0].style.display = "none";
+        })
+        dSelA(".close_modal")[1].addEventListener("click", function () {
+            dCN("meta_list")[0].style.display = "none";
+        })
+
+        //select box change
+        function searchChageSelect(){
+            //메인 검색
+            let categorySelect = dId("search_category_name_code");
+            let systemSelect = dId("search_system_name_code");
+            let targetSelect = dId("search_target_system_name_code");
+            let categorySelectValue = categorySelect.options[categorySelect.selectedIndex].value;
+            let systemSelectValue = systemSelect.options[systemSelect.selectedIndex].value;
+            let targetSelectValue = targetSelect.options[targetSelect.selectedIndex].value;
+        }
+		
+        // Test용 Auto Set Mapping Basic Info
+        function setTestData1(){
+        	let addCategorySelect = dId("add_category_name_code_m");
+            let mapName = dId("mapName");
+            let mapDesc = dId("mapDesc");
+            let addSystemSelect = dId("add_system_name_code_m");
+            let soName = dId("soName");
+            let addTargetSystemSelect = dId("add_target_system_name_m");
+            let toName = dId("toName");
+            
+            addCategorySelect.options[1].selected = true;
+            mapName.value = '매출 집계';
+            mapDesc.value = 'Daily 매출 월 집계';
+            addSystemSelect.options[1].selected = true;
+            soName.value = 'IA_Z1TSF0002';
+            addTargetSystemSelect.options[2].selected = true;
+            toName.value = 'Sales_Temp__c';
+        }
+        
+     	// Test용 Auto Set Mapping Field Info
+        function setTestData2(){
+        	var tgtTable = dId("tgt_object");
+        	var addTable = dId("add_meta_table");
+     		for(cnt=0; cnt<=10; cnt++){
+     			tgtTable.deleteRow(1);
+     			addTable.deleteRow(1);
+
+                for (i = 0; i < dCN("meta-column-list")[0].rows.length; i++) {
+                	tgtTable.querySelector('tbody').children[i].children[0].innerHTML = i+1
+                }	
+        	}
+        	
+     		let inputLength = document.getElementsByName("add_meta_name").length
+
+            for (i = 0; i < inputLength; i++) {
+                if(i==0){
+                	document.getElementsByName("add_meta_name")[i].value = 'BASDT';
+                	document.getElementsByName("add_meta_type")[i].value = "VARCHAR2";
+                	document.getElementsByName("add_meta_length")[i].value = 8;
+                	document.getElementsByName("add_meta_nullable")[i].value = "false";
+                	document.getElementsByName("add_meta_precision")[i].value = 0;
+                	document.getElementsByName("add_meta_digits")[i].value = 0;
+                }
+                
+                if(i==1){
+                	document.getElementsByName("add_meta_name")[i].value = 'KUNNR';
+                	document.getElementsByName("add_meta_type")[i].value = "VARCHAR2";
+                	document.getElementsByName("add_meta_length")[i].value = 10;
+                	document.getElementsByName("add_meta_nullable")[i].value = "false";
+                	document.getElementsByName("add_meta_precision")[i].value = 0;
+                	document.getElementsByName("add_meta_digits")[i].value = 0;
+                }
+                
+                if(i==2){
+                	document.getElementsByName("add_meta_name")[i].value = 'ITEM_KIND';
+                	document.getElementsByName("add_meta_type")[i].value = "VARCHAR2";
+                	document.getElementsByName("add_meta_length")[i].value = 20;
+                	document.getElementsByName("add_meta_nullable")[i].value = "false";
+                	document.getElementsByName("add_meta_precision")[i].value = 0;
+                	document.getElementsByName("add_meta_digits")[i].value = 0;
+                }
+                
+                if(i==3){
+                	document.getElementsByName("add_meta_name")[i].value = 'MATNR';
+                	document.getElementsByName("add_meta_type")[i].value = "VARCHAR2";
+                	document.getElementsByName("add_meta_length")[i].value = 18;
+                	document.getElementsByName("add_meta_nullable")[i].value = "false";
+                	document.getElementsByName("add_meta_precision")[i].value = 0;
+                	document.getElementsByName("add_meta_digits")[i].value = 0;
+                }
+                
+                if(i==4){
+                	document.getElementsByName("add_meta_name")[i].value = 'NAME1';
+                	document.getElementsByName("add_meta_type")[i].value = "VARCHAR2";
+                	document.getElementsByName("add_meta_length")[i].value = 120;
+                	document.getElementsByName("add_meta_nullable")[i].value = "true";
+                	document.getElementsByName("add_meta_precision")[i].value = 0;
+                	document.getElementsByName("add_meta_digits")[i].value = 0;
+                }
+                
+                if(i==5){
+                	document.getElementsByName("add_meta_name")[i].value = 'MAKTX';
+                	document.getElementsByName("add_meta_type")[i].value = "VARCHAR2";
+                	document.getElementsByName("add_meta_length")[i].value = 80;
+                	document.getElementsByName("add_meta_nullable")[i].value = "true";
+                	document.getElementsByName("add_meta_precision")[i].value = 0;
+                	document.getElementsByName("add_meta_digits")[i].value = 0;
+                }
+                
+                if(i==6){
+                	document.getElementsByName("add_meta_name")[i].value = 'REGION';
+                	document.getElementsByName("add_meta_type")[i].value = "VARCHAR2";
+                	document.getElementsByName("add_meta_length")[i].value = 50;
+                	document.getElementsByName("add_meta_nullable")[i].value = "true";
+                	document.getElementsByName("add_meta_precision")[i].value = 0;
+                	document.getElementsByName("add_meta_digits")[i].value = 0;
+                }
+                
+                if(i==7){
+                	document.getElementsByName("add_meta_name")[i].value = 'LAND';
+                	document.getElementsByName("add_meta_type")[i].value = "VARCHAR2";
+                	document.getElementsByName("add_meta_length")[i].value = 20;
+                	document.getElementsByName("add_meta_nullable")[i].value = "true";
+                	document.getElementsByName("add_meta_precision")[i].value = 0;
+                	document.getElementsByName("add_meta_digits")[i].value = 0;
+                }
+                
+                if(i==8){
+                	document.getElementsByName("add_meta_name")[i].value = 'GUBUN';
+                	document.getElementsByName("add_meta_type")[i].value = "VARCHAR2";
+                	document.getElementsByName("add_meta_length")[i].value = 10;
+                	document.getElementsByName("add_meta_nullable")[i].value = "true";
+                	document.getElementsByName("add_meta_precision")[i].value = 0;
+                	document.getElementsByName("add_meta_digits")[i].value = 0;
+                }
+                
+                if(i==9){
+                	document.getElementsByName("add_meta_name")[i].value = 'E_MAIL';
+                	document.getElementsByName("add_meta_type")[i].value = "VARCHAR2";
+                	document.getElementsByName("add_meta_length")[i].value = 100;
+                	document.getElementsByName("add_meta_nullable")[i].value = "true";
+                	document.getElementsByName("add_meta_precision")[i].value = 0;
+                	document.getElementsByName("add_meta_digits")[i].value = 0;
+                }
+                
+                if(i==10){
+                	document.getElementsByName("add_meta_name")[i].value = 'FKIMG';
+                	document.getElementsByName("add_meta_type")[i].value = "NUMBER";
+                	document.getElementsByName("add_meta_length")[i].value = 22;
+                	document.getElementsByName("add_meta_nullable")[i].value = "true";
+                	document.getElementsByName("add_meta_precision")[i].value = 17;
+                	document.getElementsByName("add_meta_digits")[i].value = 3;
+                }
+                
+                if(i==11){
+                	document.getElementsByName("add_meta_name")[i].value = 'KNETWR';
+                	document.getElementsByName("add_meta_type")[i].value = "NUMBER";
+                	document.getElementsByName("add_meta_length")[i].value = 22;
+                	document.getElementsByName("add_meta_nullable")[i].value = "true";
+                	document.getElementsByName("add_meta_precision")[i].value = 17;
+                	document.getElementsByName("add_meta_digits")[i].value = 3;
+                }
+                
+                if(i==12){
+                	document.getElementsByName("add_meta_name")[i].value = 'KMWSBP';
+                	document.getElementsByName("add_meta_type")[i].value = "NUMBER";
+                	document.getElementsByName("add_meta_length")[i].value = 22;
+                	document.getElementsByName("add_meta_nullable")[i].value = "true";
+                	document.getElementsByName("add_meta_precision")[i].value = 17;
+                	document.getElementsByName("add_meta_digits")[i].value = 3;
+                }
+                
+                if(i==13){
+                	document.getElementsByName("add_meta_name")[i].value = 'KAMOUNT';
+                	document.getElementsByName("add_meta_type")[i].value = "NUMBER";
+                	document.getElementsByName("add_meta_length")[i].value = 22;
+                	document.getElementsByName("add_meta_nullable")[i].value = "true";
+                	document.getElementsByName("add_meta_precision")[i].value = 17;
+                	document.getElementsByName("add_meta_digits")[i].value = 3;
+                }
+                
+                if(i==14){
+                	document.getElementsByName("add_meta_name")[i].value = 'NETWR';
+                	document.getElementsByName("add_meta_type")[i].value = "NUMBER";
+                	document.getElementsByName("add_meta_length")[i].value = 22;
+                	document.getElementsByName("add_meta_nullable")[i].value = "true";
+                	document.getElementsByName("add_meta_precision")[i].value = 17;
+                	document.getElementsByName("add_meta_digits")[i].value = 3;
+                }
+                
+                if(i==15){
+                	document.getElementsByName("add_meta_name")[i].value = 'STRIP';
+                	document.getElementsByName("add_meta_type")[i].value = "NUMBER";
+                	document.getElementsByName("add_meta_length")[i].value = 22;
+                	document.getElementsByName("add_meta_nullable")[i].value = "true";
+                	document.getElementsByName("add_meta_precision")[i].value = 17;
+                	document.getElementsByName("add_meta_digits")[i].value = 3;
+                }
+                
+                if(i==16){
+                	document.getElementsByName("add_meta_name")[i].value = 'SUNIT';
+                	document.getElementsByName("add_meta_type")[i].value = "NUMBER";
+                	document.getElementsByName("add_meta_length")[i].value = 22;
+                	document.getElementsByName("add_meta_nullable")[i].value = "true";
+                	document.getElementsByName("add_meta_precision")[i].value = 17;
+                	document.getElementsByName("add_meta_digits")[i].value = 3;
+                }
+                
+                if(i==18){
+                	document.getElementsByName("add_meta_name")[i].value = 'LEVEL2';
+                	document.getElementsByName("add_meta_type")[i].value = "VARCHAR2";
+                	document.getElementsByName("add_meta_length")[i].value = 20;
+                	document.getElementsByName("add_meta_nullable")[i].value = "true";
+                	document.getElementsByName("add_meta_precision")[i].value = 0;
+                	document.getElementsByName("add_meta_digits")[i].value = 0;
+                }
+                
+                if(i==19){
+                	document.getElementsByName("add_meta_name")[i].value = 'LEVEL3';
+                	document.getElementsByName("add_meta_type")[i].value = "VARCHAR2";
+                	document.getElementsByName("add_meta_length")[i].value = 20;
+                	document.getElementsByName("add_meta_nullable")[i].value = "true";
+                	document.getElementsByName("add_meta_precision")[i].value = 0;
+                	document.getElementsByName("add_meta_digits")[i].value = 0;
+                }
+                
+                if(i==20){
+                	document.getElementsByName("add_meta_name")[i].value = 'LEVEL4';
+                	document.getElementsByName("add_meta_type")[i].value = "VARCHAR2";
+                	document.getElementsByName("add_meta_length")[i].value = 20;
+                	document.getElementsByName("add_meta_nullable")[i].value = "true";
+                	document.getElementsByName("add_meta_precision")[i].value = 0;
+                	document.getElementsByName("add_meta_digits")[i].value = 0;
+                }
+                
+            }
+     		
+     		tgtTable.deleteRow(18);
+ 			addTable.deleteRow(18);
+
+            for (i = 0; i < dCN("meta-column-list")[0].rows.length; i++) {
+            	tgtTable.querySelector('tbody').children[i].children[0].innerHTML = i+1
+            }
+     	}
+        
+        //등록 select box change
+        function addChageSelect(){
+            //등록
+            let addCategorySelect = dId("add_category_name_code_m");
+            let addSystemSelect = dId("add_system_name_code_m");
+            let addTargetSystemSelect = dId("add_target_system_name_m");
+            let addCategorySelectValue = addCategorySelect.options[addCategorySelect.selectedIndex].value;
+            let addSystemSelectValue = addSystemSelect.options[addSystemSelect.selectedIndex].value;
+            let addTargetSystemSelectValue = addTargetSystemSelect.options[addTargetSystemSelect.selectedIndex].value;
+        }
+
+        //수정 select box change
+        function modiChageSelect(){
+            let modiCategorySelect = dId("modify_category_name_code_m");
+            let modiSystemSelect = dId("modify_system_name_code_m");
+            let modiCategorySelectValue = modiCategorySelect.options[modiCategorySelect.selectedIndex].value;
+            let modiSystemSelectValue = modiSystemSelect.options[modiSystemSelect.selectedIndex].value;
+        }
+
+        function reload() {
+            location.href ='/map/wa100';
+            dId("sys_search_form").scrollIntoView();
+            // dId("mappingList").focus();
+        }
+
+        //맵핑 조회 (검색)
+        function search() {
+			showSearchSpinner();
+			
+            let cat_code = dId("search_category_name_code").value
+            let sys_code = dId("search_system_name_code").value
+            let tgt_code = dId("search_target_system_name_code").value
+            let start_dt = dId("startDate").value
+            let end_dt = dId("endDate").value
+            let search_category = dId("search_category").value
+            let search_txt = dId("search_mapping_object").value
+
+
+            let url = "/map/wa100/svc101";
+            let params = {cat_code: cat_code, src_sys_code: sys_code, tgt_sys_code: tgt_code, start_dt: start_dt, end_dt: end_dt, search_category: search_category, search_txt: search_txt};
+
+            ajax(url, params,
+                res => {
+                    let html = ''
+                    if (res.result.length != 0) {
+                        res.result.forEach(function (value, index) {
+                            let create_datetime = value.created_datetime.replace('T', ' ').substring(0, 19)
+                            let modify_datetime = value.last_modified_datetime.replace('T', ' ').substring(0, 19)
+
+                            html += '<tr class="text-center" onclick="clickEvent2()" data-bs-toggle="modal" data-bs-target="#addMapping">'
+                            html += '   <td>'+(index+1)+'</td>'
+                            html += '   <td>'+ value.id +'</td>'
+                            html += '   <td style="display: none">'+ value.cat_code +'</td>'
+                            html += '   <td>'+ value.cat_name +'</td>'
+                            html += '   <td style="text-align: left">'+ value.name +'</td>'
+                            html += '   <td style="text-align: left">'+ value.description +'</td>'
+                            html += '   <td style="display: none">'+ value.src_id +'</td>'
+                            html += '   <td style="display: none">'+ value.src_sys_code +'</td>'
+                            html += '   <td>'+ value.src_sys_name +'</td>'
+                            html += '   <td>'+ value.src_obj_name +'</td>'
+                            html += '   <td style="display: none">'+ value.tgt_id +'</td>'
+                            html += '   <td style="display: none">'+ value.tgt_sys_code +'</td>'
+                            html += '   <td>'+ value.tgt_sys_name +'</td>'
+                            html += '   <td>'+ value.tgt_obj_name +'</td>'
+                            html += '   <td>'+ value.map_creator +'</td>'
+                            html += '   <td>'+ create_datetime +'</td>'
+                            html += '   <td>'+ modify_datetime +'</td>'
+                            html += '</tr>'
+                        })
+                    } else {
+                        html += '<tr class="text-center">'
+                        html += '<td colspan="13">맵핑 리스트가 없습니다.</td>'
+                        html += '</tr>'
+                    }
+                    dCN("mapping-list")[0].querySelector("tbody").innerHTML = html;
+                    trClick();
+            })
+            
+            hideSearchSpinner();
+        }
+
+
+        function trClick() {
+            // 테이블의 Row 클릭시 값 가져오기
+            $("#mappingList tbody > tr").click(function(){
+                let tdArr = new Array();    // 배열 선언
+
+                // 현재 클릭된 Row(<tr>)
+                let tr = $(this);
+                let td = tr.children();
+
+                // 반복문을 이용해서 배열에 값을 담아 사용할 수 도 있다.
+                td.each(function(i){
+                    tdArr.push(td.eq(i).text());
+                });
+
+                // td.eq(index)를 통해 값을 가져올 수도 있다.
+                let listMapId = td.eq(1).text(); // 등록 맵핑 식별자
+                let listSrcObjName = td.eq(6).text(); //소스오브젝트명
+                let listTgtObjName = td.eq(10).text(); //타겟오브젝트명
+
+
+                let srcSysCode = td.eq(7).text(); //Source System Name //4101 8
+                let tgtSysCode = td.eq(11).text(); //Target Object Name //4101 12
+                let tgtObjName = td.eq(13).text(); //Target Object Name //Sales_Temp_c 14
+
+                if (tdArr != "맵핑 리스트가 없습니다.") {
+                    modifyPageDataLoad(listMapId, listSrcObjName, listTgtObjName);
+                }
+            });
+        }
+
+        let tgt_list_;
+        //수정 모달 데이터 로드
+        function modifyPageDataLoad(listMapId, listSrcObjName, listTgtObjName) {
+
+            let url = "/map/wa110/svc101";
+            let params = {id: listMapId, src_id: listSrcObjName, tgt_id: listTgtObjName};
+
+            ajax(url, params, res => {
+                let tgt_title = '';
+                let html = '';
+                let src_list = '';
+                let tgt_list = '';
+                let mapId = '';
+
+                let tgt_name = res.result.basicInfo[0].tgt_obj_name;
+                tgt_title += '<h5 class="modal-title" style="margin-bottom: 9px;">' + tgt_name + '</h5>';
+
+                if (res.result.basicInfo.length != 0) {
+
+                    res.result.basicInfo.forEach(function (value, index) {
+                        let create_datetime = value.created_datetime.replace('T', ' ').substring(0, 19)
+                        let modify_datetime = value.last_modified_datetime.replace('T', ' ').substring(0, 19)
+
+                        mapId += '<h2 class="border-bottom py-2">' + value.name + '</h2>';
+                        // source_title += '<input class="btn btn-secondary" type="button" id="add_column" onclick="modifyAddRow()" style="float: right;" value="컬럼추가">'
+                        html += '<tr style="display: none">'
+                        html += '     <th scope="row">mapping_id</th>'
+                        html += '     <td class="mapping_id_m">' + value.id + '</td>'
+                        html += '     <td></td>'
+                        html += '</tr>'
+                        html += '<tr style="display: none">'
+                        html += '     <th scope="row">Category Code</th>'
+                        html += '     <td>' + value.cat_code + ' </td>'
+                        html += '     <td></td>'
+                        html += '</tr>'
+                        html += '<tr>'
+                        html += '	<th scope="row">* Category Name</th>'
+                        html += '		<td>'
+                        html += '			<!-- 인터페이스 업무 분류(코드도 포함) 선택 combobox -->'
+                        html += '			<select class="form-select" id="modify_category_name_code_m" onchange="modiChageSelect()" disabled>'
+                        html += '				<option value="all" >Category All</option>'
+                        html += '				<option value="'+ value.cat_code +'" selected>'+ value.cat_name +'</option>'
+                        html += '			</select>'
+                        html += '		</td>'
+                        html += '		<td></td>'
+                        html += '</tr>'
+                        html += '<tr>'
+                        html += '	<th scope="row">* Mapping Name</th>'
+                        html += '		<td>'
+                        html += '			<input id="mapNameM" type="text" value="' + value.name + '" required>'
+                        html += '		</td>'
+                        html += '		<td></td>'
+                        html += '</tr>'
+                        html += '<tr>'
+                        html += '	<th scope="row">Mapping Desc</th>'
+                        html += '		<td>'
+                        html += '			<textarea id="mapDescM" type="text" maxlength="2000" rows="5" cols="40">' + value.description + '</textarea>'
+                        html += '		</td>'
+                        html += '		<td></td>'
+                        html += '</tr>'
+                        html += '<tr style="display: none">'
+                        html += '    <th scope="row">Source System Code</th>'
+                        html += '		<td>' + value.src_sys_code + '</td>'
+                        html += '    <td></td>'
+                        html += '</tr>'
+                        html += '<tr>'
+                        html += '	<th scope="row">* Source System Name</th>'
+                        html += '		<td>'
+                        html += '			<!-- 소스 오브젝트 시스템 선택(코드도 포함) combobox -->'
+                        html += '			<select class="form-select" id="modify_system_name_code_m" disabled onchange="modiChageSelect()">'
+                        html += '				<option value="all">Source System All</option>'
+                        html += '				<option value="'+ value.src_sys_code +'" selected>'+ value.src_sys_name +'</option>'
+                        html += '			</select>'
+                        html += '		</td>'
+                        html += '		<td></td>'
+                        html += '</tr>'
+                        html += '<tr>'
+                        html += '	<th scope="row">* Source Object Name</th>'
+                        html += '		<td>'
+                        html += '			<input id="soNameM" type="text" value="' + value.src_obj_name + '" required>'
+                        html += '		</td>'
+                        html += '		<td></td>'
+                        html += '</tr>'
+                        html += '<tr>'
+                        html += '    <th scope="row">* Target System Name</th>'
+                        html += '		<td>'
+                        html += '			<!-- 타겟 오브젝트 선택 combobox (default:salesforce) -->'
+                        html += '			<select class="form-select" id="modify_target_system_name" disabled>'
+                        html += '				<option value="all" selected>Target System Name</option>'
+                        html += '				<option value="4101" selected>Salesforce</option>'
+                        html += '				<option value="'+ value.tgt_sys_code +'" selected>'+ value.tgt_sys_name +'</option>'
+                        html += '			</select>'
+                        html += '		</td>'
+                        html += '		<td></td>'
+                        html += '</tr>'
+                        html += '<tr>'
+                        html += '    <th scope="row">* Target Object Name</th>'
+                        html += '		<td style="vertical-align: middle;">'
+                        html += '			<input id="toNameM" type="text" value="' + value.tgt_obj_name + '" disabled>'
+                        html += '		</td>'
+                        html += '		<td>'
+                        html += '			<div class="input-group-append" style="margin: 3px;">'
+                        html += '				<button class="btn btn-primary" type="button" id="to_search_btn_meta" onclick="clickMetaSearch()">조회</button>'
+                        html += '			</div>'
+                        html += '		</td>'
+                        html += '</tr>'
+                        html += '<tr>'
+                        html += '    <th scope="row">맵핑 생성자</th>'
+                        html += '		<td>'
+                        html += '			<span id="mapCreatorM" value="'+ value.map_creator +'">' + value.map_creator + '</span>'
+                        html += '		</td>'
+                        html += '		<td></td>'
+                        html += '</tr>'
+                        html += '<tr>'
+                        html += '    <th scope="row">최초등록날짜</th>'
+                        html += '		<td>'
+                        html += '			<span><input type="hidden" id="created_dateM" value="'+ value.created_datetime +'">' + create_datetime + '</span>'
+                        html += '		</td>'
+                        html += '		<td></td>'
+                        html += '</tr>'
+                        html += '<tr>'
+                        html += '    <th scope="row">최종수정날짜</th>'
+                        html += '		<td>'
+                        html += '			<span>' + modify_datetime + '</span>'
+                        html += '		</td>'
+                        html += '		<td></td>'
+                        html += '</tr>'
+                        //html += '<tr>'
+                        //html += '    <th scope="row"></th>'
+                        //html += '		<td></td>'
+                        //html += '		<td></td>'
+                        //html += '</tr>'
+                        dCN("modify_popup")[0].querySelector("tbody").innerHTML = html
+                        dCN("modify_mapping_id")[0].innerHTML = mapId;
+                    })
+
+                    let srcSysName = dSel("#modify_system_name_code_m > option:checked").textContent;
+
+                    if (res.result.fieldMappingList.length != 0) {
+                        tgt_list_ = new Array();
+                        res.result.fieldMappingList.forEach(function (value, index) {
+                            tgt_list += '   <tr class="text-center" id="'+index+'" name="'+index+'">'
+                            tgt_list += '       <td>' + (index+1) + '</td>'
+                            tgt_list += '       <td style="display: none"><input type="hidden" value="' + (index+1) + '"></td>'
+                            tgt_list += '       <td style="display: none"><input type="hidden" value="' + value.id + '"></td>'
+                            tgt_list += '       <td>' + value.tgt_fld_name + '<input type="hidden" value="' + value.tgt_fld_name + '"></td>'
+                            tgt_list += '       <td style="width: 20%">' +
+                                '               <select class="form-select" id="object-type-select" disabled>' +
+                                '                    <option value="' + value.tgt_fld_type + '" selected>' + value.tgt_fld_type + '</option>' +
+                                '                </select>' +
+                                '           </td>'
+                            tgt_list += '       <td style="width: 15%;"><input type="text" value="' + value.tgt_fld_max_length + '" style="width: 50%;" disabled></td>'
+                            tgt_list += '       <td style="width: 15%">' +
+                                '               <select class="form-select" id="object-type-select" disabled>' +
+                                '                   <option value="' + value.tgt_fld_nullable + '" selected>' + value.tgt_fld_nullable + '</option>' +
+                                '               </select>' +
+                                '           </td>'
+                            tgt_list += '       <td style="width: 15%;"><input type="text" value="' + value.tgt_fld_precision + '" style="width: 50%;" disabled></td>'
+                            tgt_list += '       <td style="width: 15%;"><input type="text" value="' + value.tgt_fld_digits + '" style="width: 50%;" disabled></td>'
+                            tgt_list += '       <td style="display: none"><input type="hidden" value="' + value.tgt_fld_id + '"></td>'
+                            tgt_list += '       <td style="display: none"><input type="hidden" value="' + value.created_datetime + '"></td>'
+                            // tgt_list += '       <td><button class="btn-close" type="button" id="del_column" onclick="remove_tr(this)"></button></td>'
+                            tgt_list += '   </tr>'
+
+                            src_list += '   <tr class="text-center" id="'+index+'" name="'+index+'">'
+                            src_list += '       <td><input type="text" id="add_meta_name_m" name="add_meta_name_m" value="' + value.src_fld_name + '"></td>'
+                            src_list += '       <td style="width: 20%">'
+                            src_list += '               <select class="form-select" id="add_meta_type_m" name="add_meta_type_m" th:value="' + value.src_fld_type + '">'
+                            src_list += '                   <option value="' + value.src_fld_type + '" selected>' + value.src_fld_type + '</option>'
+                            if (srcSysName == "Salesforce Dev") { //Source System Name -> Salesforce Dev
+                                for (let i = 0; i < SalesfoectType.length; i++) {
+                                    src_list += '<option value="'+SalesfoectType[i]+'">'+SalesfoectType[i]+'</option>'
+                                }
+                            }  else {
+                                for (let i = 0; i < OracleType.length; i++) {
+                                    src_list += '<option value="'+OracleType[i]+'">'+OracleType[i]+'</option>';
+                                }
+                            }
+                            src_list += '                </select>'
+                            src_list += '           </td>'
+                            src_list += '       <td style="width: 15%;"><input type="text" id="add_meta_length_m" name="add_meta_length_m"  value="' + value.src_fld_max_length + '" style="width: 50%;"></td>'
+                            src_list += '       <td style="width: 15%">'
+                            src_list += '               <select class="form-select" id="object-type-select" th:value="' + value.src_fld_nullable + '">'
+                            if (value.src_fld_nullable != false) {
+                                src_list += '                   <option value="true" selected>true</option>';
+                                src_list += '                   <option value="false">false</option>';
+                            } else {
+                                src_list += '                   <option value="true" >true</option>';
+                                src_list += '                   <option value="false"selected>false</option>';
+                            }
+                            src_list += '               </select>'
+                            src_list += '           </td>'
+                            src_list += '       <td style="width: 15%;"><input type="text" id="add_meta_precision_m" name="add_meta_precision_m"  value="' + value.src_fld_precision + '" style="width: 50%;"></td>'
+                            src_list += '       <td style="width: 15%;"><input type="text" id="add_meta_digits_m" name="add_meta_digits_m"  value="' + value.src_fld_digits + '" style="width: 50%;"></td>'
+                            src_list += '       <td style="display: none"><input type="hidden" value="' + value.src_fld_id + '"></td>'
+                            src_list += '       <td style="width: 15%;"><button class="btn-close" type="button" id="del_column" onclick="remove_modify_tr(this)"></button></td>'
+                            src_list += '   </tr>'
+
+                            tgt_list_.push(value.tgt_fld_name)
+
+                        })
+                        // dCN("field-column-list")[0].innerHTML = src_list;
+                        dId("add_meta_table_m").querySelector("tbody").innerHTML = src_list;
+                        dCN("modify_meta_list")[0].querySelector("tbody").innerHTML = tgt_list;
+                    }
+                    dCN("modify_meta_title")[0].innerHTML = tgt_title;
+                }
+                sys_item();
+
+            })
+            function sys_item() {
+                let url = "/map/wa000/svc001";
+                ajax(url, null, res => {
+                    res.result.category.forEach(function (value, index) {
+                        let modify_option = $('<option value="'+ value.code +'">'+ value.name +'</option>');
+                        $("#modify_category_name_code_m").append(modify_option);
+                    });
+                    res.result.system.forEach(function (value, index) {
+                        //수정 소스 시스템
+                        let modify_source_option = $('<option value="'+ value.code +'" name="'+ value.id +'">'+ value.name +'</option>');
+                        $("#modify_system_name_code_m").append(modify_source_option);
+                        //수정 타겟 시스템
+                        let modify_target_option = $('<option value="'+ value.code +'">'+ value.name +'</option>');
+                        $("#modify_target_system_name").append(modify_target_option);
+                    });
+                })
+
+            }
+        }
+
+        function clickMetaSearch() {
+            let srcSysCode = dId("modify_system_name_code_m").value;
+            let tgtSysCode = dId("modify_target_system_name").value;
+            let tgtObjName = dId("toNameM").value;
+            meta_search(srcSysCode, tgtSysCode, tgtObjName)
+        }
+
+        //수정 모달 타겟 오브젝트 정보 검색
+        let meta_table_rows;
+        function meta_search(srcSysCode, tgtSysCode, tgtObjName) {
+
+            if (srcSysCode == "all") {
+                alert("Source System Name을 선택해주세요");
+                return false;
+            } else if (tgtSysCode == "all") {
+                alert("Target System Name을 선택해주세요");
+                return false;
+            }
+
+            meta_table_rows = dId("tgt_object_m").querySelector('tbody').rows.length
+
+            let lastChildIndex = dCN("modify_meta_list")[0].querySelector('tbody').rows.length;
+
+            let url = "/map/wa110/svc601";
+            let params = {srcSysCode : srcSysCode, tgtSysCode : tgtSysCode, tgtObjName : tgtObjName};
+
+            ajax(url, params, res => {
+
+                let html = '';
+                let title = '';
+
+                title += '<h5 class="modal-title" style="margin-bottom: 9px;">'+ tgtObjName +'</h5>';
+                if (res.result.length != 0) {
+                    res.result.forEach(function (value, index) {
+                        html += '   <tr class="text-center" id="'+index+'" name="'+index+'">'
+                        html += '       <td>'+ (index+1) +'<input type="hidden" value="'+ (index+1) +'"></td>'
+                        html += '       <td>'+ value.name +'</td>'
+                        html += '       <td style="width: 20%">' +
+                            '               <select class="form-select" id="object-type-select" disabled>' +
+                            '                    <option value="'+ value.type +'" selected>'+ value.type +'</option>' +
+                            '                </select>' +
+                            '           </td>'
+                        html += '       <td style="width: 15%;"><input type="text" value="'+ value.length +'" style="width: 50%;" disabled></td>'
+                        html += '       <td style="width: 15%">' +
+                            '               <select class="form-select" id="object-type-select" disabled>' +
+                            '                   <option value="'+ value.nillable +'" selected>'+ value.nillable +'</option>' +
+                            '               </select>' +
+                            '           </td>'
+                        html += '       <td style="width: 15%;"><input type="text" value="'+ value.precision +'" style="width: 50%;" disabled></td>'
+                        html += '       <td style="width: 15%;"><input type="text" value="'+ value.digits +'" style="width: 50%;" disabled></td>'
+                        // html += '       <td><button class="btn-close" type="button" id="del_column" onclick="remove_tr(this)"></button></td>'
+                        html += '   </tr>'
+                        dCN("tgt_object_hidden")[0].querySelector("tbody").innerHTML = html;
+
+                        const table = dId("tgt_object_m");
+                        const metatable = dId("tgt_object_hidden").querySelector('tbody').rows.length;
+
+                        const newRow = table.insertRow();
+                        newRow.setAttribute("class", "text-center")
+                        newRow.setAttribute("id", (dId("tgt_object_m").querySelector('tbody').rows.length)-1)
+                        newRow.setAttribute("name", (dId("tgt_object_m").querySelector('tbody').rows.length)-1)
+                        newRow.setAttribute("style", "background: aliceblue;")
+
+                        // 새 행(Row)에 Cell 추가
+                        const newCell1 = newRow.insertCell(0);
+                        const newCell2 = newRow.insertCell(1);
+                        const newCell3 = newRow.insertCell(2);
+                        const newCell4 = newRow.insertCell(3);
+                        const newCell5 = newRow.insertCell(4);
+                        const newCell6 = newRow.insertCell(5);
+                        const newCell7 = newRow.insertCell(6);
+                        const newCell8 = newRow.insertCell(7);
+                        const newCell9 = newRow.insertCell(8);
+                        const newCell10 = newRow.insertCell(9);
+                        const newCell11 = newRow.insertCell(10);
+
+                        let result = tgt_list_.filter((v) => v == value.name)
+
+                        if (result != value.name) {
+                            for (let i=0; i<metatable; i++ ){
+                                // Cell에 텍스트 추가
+                                newCell1.innerHTML = '<td>'+ (lastChildIndex+metatable) +'<input type="hidden" value="'+ (lastChildIndex+metatable) +'"></td>';
+                                newCell2.innerHTML = '<td style="display: none;"><input type="hidden" value="'+ (lastChildIndex+metatable) +'"></td>';
+                                newCell3.innerHTML = '<td style="display: none;"><input type="hidden" value="null"></td>';
+                                newCell4.innerHTML = '<td>'+ value.name +'<input type="hidden" value="'+ value.name +'"></td>';
+                                newCell5.innerHTML = '<td style="width: 20%">' +
+                                    '                       <select class="form-select" id="object-type-select" disabled>' +
+                                    '                       <option value="'+ value.type +'" selected>'+ value.type +'</option>' +
+                                    '                   </select>' +
+                                    '                 </td>';
+                                newCell6.innerHTML = '<td style="width: 15%;"><input type="text" value="'+ value.length +'" style="width: 50%;" disabled></td>';
+                                newCell7.innerHTML = '<td style="width: 15%">' +
+                                    '                  <select class="form-select" id="object-type-select" disabled>' +
+                                    '                       <option value="'+ value.nillable +'" selected>'+ value.nillable +'</option>' +
+                                    '                   </select>' +
+                                    '                 </td>';
+                                newCell8.innerHTML = '<td style="width: 15%;"><input type="text" value="'+ value.precision +'" style="width: 50%;" disabled></td>';
+                                newCell9.innerHTML = '<td style="width: 15%;"><input type="text" value="'+ value.digits +'" style="width: 50%;" disabled></td>';
+                                newCell10.innerHTML = '<td><input type="hidden" value="null"></td>';
+                                newCell11.innerHTML = '<td><input type="hidden"></td>';
+
+                                newCell2.style.display = "none";
+                                newCell3.style.display = "none";
+                                newCell10.style.display = "none";
+                                newCell11.style.display = "none";
+                            }
+                        } else {
+                            newRow.remove();
+                        }
+                        dId("tgt_object_m").querySelector('tbody').children[metatable-1].firstChild.innerText = metatable
+                    })
+                    dCN("modify_meta_title")[0].innerHTML = title;
+                    addSrcRow();
+                }
+
+            })
+        }
+
+        //맵핑 추가 popup만 나오게
+        function clickEvent() {
+        	resetMappingConfig();
+            dCN("add_popup")[0].style.display = "block";
+            dCN("modify_popup")[0].style.display = "none";
+            dCN("modify_meta_list")[0].style.display = "none";
+        }
+
+        //맵핑 수정 popup만 나오게
+        function clickEvent2() {
+            dCN("add_popup")[0].style.display = "none";
+            dCN("modify_popup")[0].style.display = "block";
+            dCN("modify_meta_list")[0].style.display = "block";
+        }
+        
+        //맵핑 설정 Basic info 초기화
+        function resetMappingConfig(){
+        	let addCategorySelect = dId("add_category_name_code_m");
+            let mapName = dId("mapName");
+            let mapDesc = dId("mapDesc");
+            let addSystemSelect = dId("add_system_name_code_m");
+            let soName = dId("soName");
+            let addTargetSystemSelect = dId("add_target_system_name_m");
+            let toName = dId("toName");
+            
+            addCategorySelect.options[0].selected = true;
+            mapName.value = '';
+            mapDesc.value = '';
+            addSystemSelect.options[0].selected = true;
+            soName.value = '';
+            addTargetSystemSelect.options[0].selected = true;
+            toName.value = '';
+        }
+        
+        // 맵핑 검색 시 버튼 Spinner 추가
+        function showSearchSpinner(){
+        	let btnSpinner = document.createElement('span');
+			btnSpinner.setAttribute('class','spinner-border spinner-border-sm');
+			btnSpinner.setAttribute('id','btn_search_spinner');
+			dId("btn_search").appendChild(btnSpinner);
+			dId("btn_search_spinner").style.visibility = 'visible';
+        	//<span class="spinner-border spinner-border-sm" id="btn_search_spinner"></span>
+        }
+        
+     	// 맵핑 검색 완료 후 Spinner 제거
+		function hideSearchSpinner(){
+			let btnSpinner = dId("btn_search_spinner");
+			let parent = btnSpinner.parentElement;
+			parent.removeChild(btnSpinner);
+        }
+		
+    </script>
+</th:block>
+</html>

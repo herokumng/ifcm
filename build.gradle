@@ -1,0 +1,83 @@
+plugins {
+	id 'org.springframework.boot' version '2.7.5'
+	id 'io.spring.dependency-management' version '1.0.15.RELEASE'
+	id 'java'
+}
+
+group = 'com.dkbmc'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '17'
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+	
+	// lombok
+	compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    
+    // thymeleaf
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation 'nz.net.ultraq.thymeleaf:thymeleaf-layout-dialect'
+    
+    // Spring Boot Validation
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    
+    // Swagger : API doc
+	implementation 'io.springfox:springfox-boot-starter:3.0.0'
+	
+	// Spring Security
+
+	//WEBFLUX
+	implementation 'org.springframework.boot:spring-boot-starter-webflux:2.7.5'
+
+	//GSON
+	implementation 'com.google.code.gson:gson:2.10'
+	implementation 'com.googlecode.json-simple:json-simple:1.1.1'
+
+	// slf4j logging
+	implementation 'org.slf4j:slf4j-simple:2.0.3'
+
+	//jackson databind
+	implementation 'com.fasterxml.jackson.core:jackson-databind:2.14.0'
+	
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.14.0'
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.14.0'
+	implementation 'com.fasterxml.jackson.module:jackson-module-parameter-names:2.14.0'
+	
+	//jackson csvformatter
+	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.11.0'
+
+    // Spring Security
+    // implementation 'org.springframework.boot:spring-boot-starter-security'
+    // implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity5'
+
+	//File Upload
+	implementation 'commons-fileupload:commons-fileupload:1.4'
+	implementation 'commons-io:commons-io:2.11.0'
+
+	// MySQL
+	implementation 'mysql:mysql-connector-java'
+	// MariaDB
+	implementation 'org.mariadb.jdbc:mariadb-java-client'
+
+	// JPA
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+	implementation 'org.springframework.session:spring-session-jdbc'
+
+	// Apache
+	implementation 'org.apache.httpcomponents:httpclient:4.5.13'
+
+	// Modelmapper
+	implementation 'org.modelmapper:modelmapper:3.1.0'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}

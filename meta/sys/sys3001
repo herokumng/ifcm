@@ -1,0 +1,201 @@
+{
+  "data_list" : [ {
+    "id" : "01GJETQA35WSMG8GX6PY25CSSJ",
+    "type" : "info",
+    "code" : "0000",
+    "message" : "get user info via canvas app request",
+    "created_datetime" : "2022-11-22T14:05:12",
+    "last_modified_datetime" : "2022-11-22T14:05:12"
+  }, {
+    "id" : "01GJETQA35YC6E74SZGZ17EP7W",
+    "type" : "info",
+    "code" : "0001",
+    "message" : "query condition request",
+    "created_datetime" : "2022-11-22T14:05:12",
+    "last_modified_datetime" : "2022-11-22T14:05:12"
+  }, {
+    "id" : "01GJETQA35ZR2EFC84QVXZQR89",
+    "type" : "info",
+    "code" : "0002",
+    "message" : "select mapping list request",
+    "created_datetime" : "2022-11-22T14:05:12",
+    "last_modified_datetime" : "2022-11-22T14:05:12"
+  }, {
+    "id" : "01GJETQA35WNC1RCWYVQJ29GX3",
+    "type" : "info",
+    "code" : "0003",
+    "message" : "delete mapping request",
+    "created_datetime" : "2022-11-22T14:05:12",
+    "last_modified_datetime" : "2022-11-22T14:05:12"
+  }, {
+    "id" : "01GJETQA353NQZY8R9XSQY2AAB",
+    "type" : "info",
+    "code" : "0004",
+    "message" : "upload form file download request",
+    "created_datetime" : "2022-11-22T14:05:12",
+    "last_modified_datetime" : "2022-11-22T14:05:12"
+  }, {
+    "id" : "01GJETQA35723XVY54PZENG2RB",
+    "type" : "info",
+    "code" : "0005",
+    "message" : "data upload request",
+    "created_datetime" : "2022-11-22T14:05:12",
+    "last_modified_datetime" : "2022-11-22T14:05:12"
+  }, {
+    "id" : "01GJETQA35C4G3ZYSSWYEGSQDQ",
+    "type" : "info",
+    "code" : "0006",
+    "message" : "select mapping detail request",
+    "created_datetime" : "2022-11-22T14:05:12",
+    "last_modified_datetime" : "2022-11-22T14:05:12"
+  }, {
+    "id" : "01GJETQA35PW8A5WAYHW08JDMN",
+    "type" : "info",
+    "code" : "0007",
+    "message" : "upsert mapping request",
+    "created_datetime" : "2022-11-22T14:05:12",
+    "last_modified_datetime" : "2022-11-22T14:05:12"
+  }, {
+    "id" : "01GJETQA35E5XK28SK05YPXDR4",
+    "type" : "info",
+    "code" : "0008",
+    "message" : "upsert target object request",
+    "created_datetime" : "2022-11-22T14:05:12",
+    "last_modified_datetime" : "2022-11-22T14:05:12"
+  }, {
+    "id" : "01GJETQA35M3A9BPK3A2WPRQWA",
+    "type" : "return",
+    "code" : "0200",
+    "message" : "success",
+    "created_datetime" : "2022-11-22T14:05:12",
+    "last_modified_datetime" : "2022-11-22T14:05:12"
+  }, {
+    "id" : "01GJETQA3591E29YF71GZ1PDMA",
+    "type" : "return",
+    "code" : "0500",
+    "message" : "failed",
+    "created_datetime" : "2022-11-22T14:05:12",
+    "last_modified_datetime" : "2022-11-22T14:05:12"
+  }, {
+    "id" : "01GJETQA35T4Q0V2F9XH6JVEKF",
+    "type" : "return",
+    "code" : "0400",
+    "message" : "bad request",
+    "created_datetime" : "2022-11-22T14:05:12",
+    "last_modified_datetime" : "2022-11-22T14:05:12"
+  }, {
+    "id" : "01GJETQA35F2NYGDZ1VVY9SH2N",
+    "type" : "return",
+    "code" : "0300",
+    "message" : "redirection",
+    "created_datetime" : "2022-11-22T14:05:12",
+    "last_modified_datetime" : "2022-11-22T14:05:12"
+  }, {
+    "id" : "01GJETQA351F0E5WB2DR2V50Q4",
+    "type" : "return",
+    "code" : "0100",
+    "message" : "request received",
+    "created_datetime" : "2022-11-22T14:05:12",
+    "last_modified_datetime" : "2022-11-22T14:05:12"
+  }, {
+    "id" : "01GJETQA3514DEF1HNYJXPNX96",
+    "type" : "return",
+    "code" : "1600",
+    "message" : "%s 호출에 성공했습니다.",
+    "created_datetime" : "2022-11-22T14:05:12",
+    "last_modified_datetime" : "2022-11-22T14:05:12"
+  }, {
+    "id" : "01GJETQA3548S11JPFH35DJ66E",
+    "type" : "return",
+    "code" : "2600",
+    "message" : "%s 호출에 실패했습니다.",
+    "created_datetime" : "2022-11-22T14:05:12",
+    "last_modified_datetime" : "2022-11-22T14:05:12"
+  }, {
+    "id" : "01GJETQA35X5SGT9DYJZHWRQHD",
+    "type" : "return",
+    "code" : "1100",
+    "message" : "%s 조회에 성공 했습니다.",
+    "created_datetime" : "2022-11-22T14:05:12",
+    "last_modified_datetime" : "2022-11-22T14:05:12"
+  }, {
+    "id" : "01GJETQA352DEXAT282PMJ7PAN",
+    "type" : "return",
+    "code" : "2100",
+    "message" : "%s 조회에 실패 했습니다.",
+    "created_datetime" : "2022-11-22T14:05:12",
+    "last_modified_datetime" : "2022-11-22T14:05:12"
+  }, {
+    "id" : "01GJETQA35TAVEGX828SKC9DT8",
+    "type" : "return",
+    "code" : "1200",
+    "message" : "%s 등록에 성공 했습니다.",
+    "created_datetime" : "2022-11-22T14:05:12",
+    "last_modified_datetime" : "2022-11-22T14:05:12"
+  }, {
+    "id" : "01GJETQA35BGAMSCQNHYYD4JVP",
+    "type" : "return",
+    "code" : "2200",
+    "message" : "%s 등록에 실패 했습니다.",
+    "created_datetime" : "2022-11-22T14:05:12",
+    "last_modified_datetime" : "2022-11-22T14:05:12"
+  }, {
+    "id" : "01GJETQA35KNFZWY0Z0HS2JBQ4",
+    "type" : "return",
+    "code" : "1300",
+    "message" : "%s 수정에 성공 했습니다.",
+    "created_datetime" : "2022-11-22T14:05:12",
+    "last_modified_datetime" : "2022-11-22T14:05:12"
+  }, {
+    "id" : "01GJETQA35ZWMBMFK0S22SEH26",
+    "type" : "return",
+    "code" : "2300",
+    "message" : "%s 수정에 실패 했습니다.",
+    "created_datetime" : "2022-11-22T14:05:12",
+    "last_modified_datetime" : "2022-11-22T14:05:12"
+  }, {
+    "id" : "01GJETQA36DCNYN9D22V91GJ09",
+    "type" : "return",
+    "code" : "1400",
+    "message" : "%s 삭제에 성공 했습니다.",
+    "created_datetime" : "2022-11-22T14:05:12",
+    "last_modified_datetime" : "2022-11-22T14:05:12"
+  }, {
+    "id" : "01GJETQA36G2GR7ACC9ZM0GPNB",
+    "type" : "return",
+    "code" : "2500",
+    "message" : "%s 처리에 실패 했습니다.",
+    "created_datetime" : "2022-11-22T14:05:12",
+    "last_modified_datetime" : "2022-11-22T14:05:12"
+  }, {
+    "id" : "01GJETQA36TC6P9QGTSVHMQPVH",
+    "type" : "return",
+    "code" : "2400",
+    "message" : "%s 삭제에 실패 했습니다.",
+    "created_datetime" : "2022-11-22T14:05:12",
+    "last_modified_datetime" : "2022-11-22T14:05:12"
+  }, {
+    "id" : "01GJETQA369R5EJCZ8WBCADJWA",
+    "type" : "return",
+    "code" : "1500",
+    "message" : "%s 처리에 성공 했습니다.",
+    "created_datetime" : "2022-11-22T14:05:12",
+    "last_modified_datetime" : "2022-11-22T14:05:12"
+  }, {
+    "id" : "01GJETQA36NVC4S3W5WSV9FDAH",
+    "type" : "return",
+    "code" : "1000",
+    "message" : "%s에 성공 했습니다.",
+    "created_datetime" : "2022-11-22T14:05:12",
+    "last_modified_datetime" : "2022-11-22T14:05:12"
+  }, {
+    "id" : "01GJETQA3608P6X32TE2ZRJ8K0",
+    "type" : "return",
+    "code" : "2000",
+    "message" : "%s에 실패 했습니다.",
+    "created_datetime" : "2022-11-22T14:05:12",
+    "last_modified_datetime" : "2022-11-22T14:05:12"
+  }   
+  
+  ]
+}

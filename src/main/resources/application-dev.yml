@@ -1,0 +1,10 @@
+  # 서버 설정
+server:
+  port: ${PORT:8080}
+  compression:
+    enabled: true
+
+spring:
+  # Banner
+  banner:
+    location: classpath:/banner-dev.txt

@@ -1,0 +1,19 @@
+.modify_mapping th {
+    vertical-align: middle;
+}
+
+.modify_mapping td {
+    margin: 3px;
+}
+
+.hidden {
+    display: none;
+}
+.meta-search-h4 {
+    width: 20%;
+    display: inline-flex;
+}
+
+.modify_mapping td input, textarea{
+    width: 100%;
+}

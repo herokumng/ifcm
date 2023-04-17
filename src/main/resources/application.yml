@@ -1,0 +1,27 @@
+spring:
+#  실팽 프로파일 설정
+  profiles:
+#    active: local
+    active: ${ENV}
+#    active: prod
+    include: oauth
+#     thymeleaf 설정
+  web:
+    resources:
+      static-locations: file:src/main/resources/static/
+  thymeleaf:
+    prefix: file:src/main/resources/templates/
+    suffix: .html
+    check-template-location: true
+    mode: HTML5
+    encoding: UTF-8
+    cache: false
+#    파일 업로드 최대용량 설정
+  servlet:
+    multipart:
+      max-request-size: 100MB
+      max-file-size: 100MB
+
+# log4j2
+logging :
+  config : classpath:logback/logback-spring.xml

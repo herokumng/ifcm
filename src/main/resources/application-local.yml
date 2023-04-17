@@ -1,0 +1,83 @@
+spring:
+  ##DATABASE
+  datasource:
+    ##Maria
+    maria-map:
+      driver-class-name: org.mariadb.jdbc.Driver
+      jdbc-url: jdbc:mariadb://92okva.stackhero-network.com:3306/test2
+      username: root
+      password: G68RJ5b2re1PcyBlDTDDYh27vcVdDfq6
+
+    ##MySQL
+    mysql-hr:
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      jdbc-url: jdbc:mysql://172.20.4.142:3306/world
+      username: inyoon
+      password: 1234
+
+
+  ##JPA Setting
+  jpa:
+    database-platform: org.hibernate.dialect.MariaDBDialect
+#    database-platform: org.hibernate.dialect.MySQLDialect
+    show-sql: true
+    ##Hibernate
+    hibernate:
+      ddl-auto: none
+      defer-datasource-initialization: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MariaDBDialect
+#        dialect: org.hibernate.dialect.MySQLDialect
+        globally_quoted_identifiers: true
+        show_sql: true
+        format_sql: false
+
+
+  session:
+    store-type: jdbc
+    jdbc:
+      initialize-schema: never
+
+  sql:
+    init:
+      mode: never
+
+
+#logging:
+#  level:
+#    org:
+#      hibernate:
+#        type:
+#          descriptor:
+#            sql: trace
+
+
+  devtools:
+    livereload:
+      enabled: true
+  ##Banner
+  banner:
+    location: classpath:/banner-local.txt
+##서버 설정
+server:
+  port: ${PORT:9090}
+  compression:
+    enabled: true
+
+
+## Salesforce
+apex_call_url: https://dkbmc-interface-hub-dev-ed.my.salesforce.com/services/data/v56.0/sobjects
+apex_call_url2: https://dkbmc-interface-hub-dev-ed.my.salesforce.com//services/apexrest
+token_url: https://login.salesforce.com/services/oauth2/token
+system:
+  client:
+    id: 3MVG9fe4g9fhX0E7bfq9Zq4T_UKx1KU5WejTSquZSXeoadGjDh9thMJGV2BZnARR7u4GA2hBag.C3vJq9qQam
+    secret: 2077C0D74DBDED30BEDBA5C21C301AB3DB2E1166258BD07EA5247742F8AEAD5B
+    grantType: password
+    username: if.admin@ifhubdev.dkbmc.com
+    password: password1234!
+
+
+## Legacy 사업자등록번호
+company_number: 123-456-7890

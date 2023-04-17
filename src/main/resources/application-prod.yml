@@ -1,0 +1,9 @@
+spring:
+  # Banner
+  banner:
+    location: classpath:/banner-prod.txt
+  # 서버 설정
+server:
+  port: ${PORT:8080}
+  compression:
+    enabled: true

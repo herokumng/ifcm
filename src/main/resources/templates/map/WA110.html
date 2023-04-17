@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+
+<th:block layout:fragment="css">
+</th:block>
+
+<th:block layout:fragment="script">
+</th:block>
+<th:block layout:fragment="popup1">
+    <!-- Add Popup -->
+    <div class="add_popup hidden" id="add_popup">
+        <div class="card">
+            <div class="container my-3">
+                <h2 class="border-bottom py-2">맵핑 설정</h2>
+                <div class="card-body">
+                    <table class = "table modify_mapping">
+                        <tr style="display: none">
+                            <th scope = "row" > Category Code </th>
+                            <td>Category Code</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">* 업무 분류</th>
+                            <td>
+                                <select class="form-select" id="add_category_name_code_m" onchange="addChageSelect()">
+                                    <option value="all" selected>선택</option>
+                                </select>
+                            </td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">* 맵핑명</th>
+                            <td>
+                                <input id="mapName" type="text" required>
+                            </td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">  맵핑 설명</th>
+                            <td>
+                                <textarea id="mapDesc" type="text" maxLength="2000" rows="5" cols="40" ></textarea>
+                            </td>
+                            <td></td>
+                        </tr>
+                        <tr style="display: none">
+                            <th scope="row">Source System Code</th>
+                            <td>
+                                Source System Code
+                            </td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">* 소스 시스템</th>
+                            <td>
+                                <select class="form-select" id="add_system_name_code_m" onchange="addChageSelect()">
+                                    <option value="all" selected>선택</option>
+                                </select>
+                            </td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">* 소스 오브젝트</th>
+                            <td>
+                                <input id="soName" type="text" required>
+                            </td>
+                            <td></td>
+                        </tr>
+                        <tr style="display: none">
+                            <th scope="row">Target System Code</th>
+                            <td>
+                                Target System Code
+                            </td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">* 타겟 시스템</th>
+                            <td>
+                                <!-- <select class="form-select" id="add_target_system_name_m" onchange="addChageSelect()" disabled> -->
+                                <select class="form-select" id="add_target_system_name_m" onchange="addChageSelect()">
+                                    <option value="all" >선택</option>
+                                    <!-- <option value="4101" selected>Salesforce</option> -->
+                                </select>
+                            </td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">* 타겟 오브젝트</th>
+                            <td style="vertical-align: middle;">
+                                <input id="toName" type="text" required>
+                            </td>
+                            <td>
+                                <div class="input-group-append" style="margin: 3px;">
+                                    <button class="btn btn-primary" type="button" id="to_search_btn"><!-- data-bs-toggle="modal" data-bs-target="#metaSearch"-->조회</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">* 생성자</th>
+                            <td>
+                                <input id="mapCreator" type="text" required disabled>
+                            </td>
+                            <td>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+				
+				<!-- Test Data Setting 용 버튼 추가 -->
+				<button type="button" class="btn btn-outline-secondary" id="testHelper1" onclick="setTestData1()">Basic Setting</button>
+				<button type="button" class="btn btn-outline-secondary" id="testHelper2" onclick="setTestData2()">Field Setting</button>
+				
+                <div class="check-list">
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <div class="meta_list hidden">
+        <div style="display: flex">
+            <div class="modal-body" style="width: 50%">
+                <div class="card-body">
+                    <div class="meta_title">
+                    </div>
+                    <!-- 오브젝트 컬럼 테이블 -->
+                    <table class="table table-striped" id="tgt_object" style="text-align-last: center;">
+                        <thead>
+                        <tr class="text-center">
+                            <!--                                    <th><input type="checkbox" id="column-check-all" onclick="selectAll(this)"></th>-->
+                            <th>no</th>
+                            <th style="display: none">no</th>
+                            <th>name</th>
+                            <th>type</th>
+                            <th>length</th>
+                            <th>nullable</th>
+                            <th>precision</th>
+                            <th>digits</th>
+                        </tr>
+                        </thead>
+                        <tbody class="meta-column-list">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="add_meta" style="width: 50%">
+                <div class="modal-body">
+                    <div class="card-body">
+                        <div style="padding-bottom: 38px;">
+                            <!--                            <input class="btn btn-secondary" type="button" id="add_column" onclick="addRow()" style="float: right;" value="컬럼추가">-->
+                        </div>
+                        <!-- 오브젝트 컬럼 테이블 -->
+                        <table class="table table-striped" id="add_meta_table" style="text-align-last: center;">
+                            <thead>
+                            <tr class="text-center">
+                                <th>name</th>
+                                <th>type</th>
+                                <th>length</th>
+                                <th>nullable</th>
+                                <th>precision</th>
+                                <th>digits</th>
+                                <th></th>
+                            </tr>
+                            </thead>
+                            <tbody class="add-meta-column-list">
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="float:right;">
+                        <input class="btn btn-success" type="button" id="saveBtn" value="저장">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script>
+        //체크박스 전체선택
+        function selectAll(selectAll) {
+            const column_check_all = dSelA('input[type="checkbox"]');
+
+            column_check_all.forEach((column_check_all) => {
+                column_check_all.checked = selectAll.checked;
+            })
+        }
+
+        let SalesfoectType = ["ADDRESS", "ANYTYPE", "CALCULATED", "COMBOBOX", "CURRENCY", "DATACATEGORYGROUPREFERENCE", "EMAIL", "ENCRYPTEDSTRING", "ID",
+            "JUNCTIONIDLIST", "LOCATION", "MASTERRECORD", "MULTIPICKLIST", "PERCENT", "PHONE", "PICKLIST", "REFERENCE", "TEXTAREA", "URL",
+            "BASE64", "BOOLEAN", "BYTE", "DATE", "DATETIME", "DOUBLE", "INT", "STRING", "TIME"];
+
+        let OracleType = ["CHAR", "VARCHAR", "VARCHAR2", "NCHAR", "NVARCHAR", "LONG", "CLOB", "NCLOB", "NUMBER", "FLOAT", "BINARY_FLOAT", "BINARY_DOUBLE", "DATE", "TIMESTAMP",
+            "BLOB", "BFILE", "LONG_RAW"];
+
+        function addSrcRow() {
+            const table = dId("add_meta_table_m");
+            const metatable = dId("tgt_object_m").querySelector('tbody').rows.length;
+            const add_tr = dId("add_meta_table_m").querySelector('tbody').rows.length;
+            let srcSysName = dSel("#modify_system_name_code_m > option:checked").textContent;
+
+            for (let i=0; i<metatable-add_tr; i++ ){
+            	const newRow = table.insertRow();
+                newRow.setAttribute("class", "text-center")
+                newRow.setAttribute("id", (dId("add_meta_table_m").querySelector('tbody').rows.length)-1)
+                newRow.setAttribute("name", (dId("add_meta_table_m").querySelector('tbody').rows.length)-1)
+				
+                // 새 행(Row)에 Cell 추가
+                const newCell1 = newRow.insertCell(0);
+                const newCell2 = newRow.insertCell(1);
+                const newCell3 = newRow.insertCell(2);
+                const newCell4 = newRow.insertCell(3);
+                const newCell5 = newRow.insertCell(4);
+                const newCell6 = newRow.insertCell(5);
+                const newCell7 = newRow.insertCell(6);
+                const newCell8 = newRow.insertCell(7);
+
+                let inner = '<select class="form-select" id="add_meta_type_m" name="add_meta_type_m" required>';
+                    inner += '<option value="all">type</option>';
+                if (srcSysName == "Salesforce Dev") { //Source System Name -> Salesforce Dev
+                    for (let i = 0; i < SalesfoectType.length; i++) {
+                        inner += '<option value="'+SalesfoectType[i]+'">'+SalesfoectType[i]+'</option>'
+                    }
+                }  else {
+                    for (let i = 0; i < OracleType.length; i++) {
+                        inner += '<option value="'+OracleType[i]+'">'+OracleType[i]+'</option>'
+                    }
+                }
+                    inner += '</select>';
+                
+                const addInitRow = dId("tgt_object_m").querySelector('tbody').rows[table.rows.length-2];
+                
+                // Cell에 텍스트 추가
+                newCell1.innerHTML = '<input type="text" id="add_meta_name_m" name="add_meta_name_m value="'+ addInitRow.getElementsByTagName('td')[3].children[0].getAttribute('value').replace('__c', '') + '" required>';
+                newCell2.innerHTML = inner;
+                newCell3.innerHTML = '<input type="text" style="width: 50%" id="add_meta_length_m" name="add_meta_length_m" value="' + addInitRow.getElementsByTagName('td')[5].children[0].getAttribute('value') + '" required>';
+                newCell4.innerHTML = '<select class="form-select" id="add_meta_nullable_m" name="add_meta_nullable_m" required>' +
+                    '                   <option value="true" selected>true</option>' +
+                    '                   <option value="false">false</option>' +
+                    '                 </select>';
+                newCell5.innerHTML = '<input type="text" style="width: 50%" id="add_meta_precision_m" name="add_meta_precision_m" value="'+ addInitRow.getElementsByTagName('td')[7].children[0].getAttribute('value') +'" required>';
+                newCell6.innerHTML = '<input type="text" style="width: 50%" id="add_meta_digits_m" name="add_meta_digits_m" value="'+ addInitRow.getElementsByTagName('td')[8].children[0].getAttribute('value') +'" required>';
+                newCell7.innerHTML = '<input type="hidden" style="width: 50%" value="null" required>';
+                newCell8.innerHTML = '<button class="btn-close" type="button" id="del_column" onclick="remove_modify_tr(this)"></button>';
+
+                newCell7.style.display = "none";
+            }
+        }
+		
+        // 2023.01.11 Field Item 삭제 시 Alert 제거
+        function remove_add_tr(This) {
+            let tgt_obj_tbody_tr = dId("tgt_object").querySelector('tbody').getElementsByTagName('tr');
+
+            // if (confirm("삭제하시겠습니까?")) {
+                // if(This.closest('tbody').childElementCount == 1) {
+                //    alert("삭제할 수 없습니다.");
+                // } else {
+                    This.closest('tr').remove();
+                    tgt_obj_tbody_tr.namedItem(This.closest('tr').id).remove();
+
+                    for (i = 0; i < dCN("meta-column-list")[0].rows.length; i++) {
+                        dId("tgt_object").querySelector('tbody').children[i].children[0].innerHTML = i+1
+                    }
+                // }
+            // }
+        }
+		
+     	// 2023.01.11 Field Item 삭제 시 Alert 제거
+        function remove_modify_tr(This) {
+            let tgt_obj_tbody_tr = dId("tgt_object_m").querySelector('tbody').getElementsByTagName('tr');
+
+            // if (confirm("삭제하시겠습니까?")) {
+                // if(This.closest('tbody').childElementCount == 1) {
+                //    alert("삭제할 수 없습니다.");
+                // } else {
+                    This.closest('tr').remove();
+                    tgt_obj_tbody_tr.namedItem(This.closest('tr').id).remove();
+
+                    for (i = 0; i < dCN("meta-column-list")[1].rows.length; i++) {
+                        dId("tgt_object_m").querySelector('tbody').children[i].children[0].innerHTML = i+1
+                    }
+                // }
+            // }
+        }
+		
+        // 태그 로드 후 Canvas User Name으로 creator 지정 
+        window.addEventListener('DOMContentLoaded', function()
+        {
+        	const creator = localStorage.getItem("creator");
+        	// console.log(creator)
+        	dId("mapCreator").value = (creator == null ? 'admin' : creator);
+        });
+        
+        
+    </script>
+
+
+    <!-- Modify Popup -->
+    <div class="modify_popup hidden" id="modify_popup">
+        <div class="card modifyModal">
+            <div class="container my-3">
+                <div class="modify_mapping_id">
+                </div>
+                <div class="card my-3">
+                    <div class="card-body">
+                        <table class="table modify_mapping">
+                            <tbody></tbody>
+                        </table>
+                        <div style="float:right; display: flex">
+                            <div class="upload-btn-wrapper" style="float:right; padding-right: 7px;">
+                                <form id="fileUpload">
+                                    <input type="file" id="file_upload" name="file_upload" multiple="multiple" style="display: none" >
+                                    <a class="btn btn-primary uploadBtn" id="uploadBtn">업로드</a>
+                                </form>
+                            </div>
+                            <a class="btn btn-primary downloadBtn" id="downloadBtn">다운로드</a>
+                            <div style="float:right;padding-left: 15px;">
+                                <input class="btn btn-warning" type="button" id="modifyBtn" value="수정">
+                                <input class="btn btn-danger" type="button" id="deleteBtn" value="삭제">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div style="padding-bottom: 50px"></div>
+
+    <!-- 수정모달 메타리스트 히든 -->
+    <div class="modify_meta_list hidden">
+        <div style="display: flex">
+            <div class="modal-body" style="width: 50%">
+                <div class="card-body">
+                    <div class="modify_meta_title">
+                    </div>
+                    <!-- 오브젝트 컬럼 테이블 -->
+                    <table class="table table-striped" id="tgt_object_m" style="text-align-last: center;">
+                        <thead>
+                        <tr class="text-center">
+                            <!--                            <th><input type="checkbox" id="column-check-all" onclick="selectAll(this)"></th>-->
+                            <th>no</th>
+                            <th style="display: none">no</th>
+                            <th style="display: none">id</th>
+                            <th>name</th>
+                            <th>type</th>
+                            <th>length</th>
+                            <th>nullable</th>
+                            <th>precision</th>
+                            <th>digits</th>
+                        </tr>
+                        </thead>
+                        <tbody class="meta-column-list">
+                        </tbody>
+                    </table>
+
+                    <div class="tgt_object_hidden hidden">
+                        <!-- 오브젝트 컬럼 테이블 -->
+                        <table class="table table-striped" id="tgt_object_hidden" style="text-align-last: center;">
+                            <thead>
+                            <tr class="text-center">
+                                <th>no</th>
+                                <th>name</th>
+                                <th>type</th>
+                                <th>length</th>
+                                <th>nullable</th>
+                                <th>precision</th>
+                                <th>digits</th>
+                            </tr>
+                            </thead>
+                            <tbody class="add-meta-column-list">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="add_meta" id="add_meta" style="width: 50%">
+                <div class="modal-body">
+                    <div class="card-body">
+                        <div style="padding-bottom: 38px;"></div>
+                        <!-- 오브젝트 컬럼 테이블 -->
+                        <table class="table table-striped" id="add_meta_table_m" style="text-align-last: center;">
+                            <thead>
+                            <tr class="text-center">
+                                <th>name</th>
+                                <th>type</th>
+                                <th>length</th>
+                                <th>nullable</th>
+                                <th>precision</th>
+                                <th>digits</th>
+                                <th></th>
+                            </tr>
+                            </thead>
+                            <tbody class="add-meta-column-list">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</th:block>
+</html>
+
+
